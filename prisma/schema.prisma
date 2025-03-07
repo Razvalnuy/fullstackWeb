@@ -23,7 +23,7 @@ model User {
   provider   String?
   providerId String?
 
-  card             Card?
+  cart             Cart?
   orders           Order[]
   verificationCode VerificationCode?
 
@@ -63,7 +63,7 @@ model ProductItem {
   size      Int?
   pizzaType Int?
 
-  cartItems CardItem[]
+  cartItems CartItem[]
 
   product   Product @relation(fields: [productId], references: [id])
   productId Int
@@ -77,19 +77,19 @@ model Ingredient {
   imageUrl String
 
   products  Product[]
-  cartItems CardItem[]
+  cartItems CartItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Card {
+model Cart {
   id Int @id @default(autoincrement())
 
   user   User? @relation(fields: [userId], references: [id])
   userId Int?  @unique
 
-  items CardItem[]
+  items CartItem[]
 
   token String
 
@@ -99,11 +99,11 @@ model Card {
   updatedAt DateTime @updatedAt
 }
 
-model CardItem {
+model CartItem {
   id Int @id @default(autoincrement())
 
-  card   Card @relation(fields: [cardId], references: [id])
-  cardId Int
+  cart   Cart @relation(fields: [cartId], references: [id])
+  cartId Int
 
   productItem   ProductItem @relation(fields: [productItemId], references: [id])
   productItemId Int
