@@ -1,22 +1,42 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { Api } from "@/services/api-client"
+import { Product } from "@prisma/client"
 import { Search } from "lucide-react"
 import Link from "next/link"
 import React, { useRef, useState } from "react"
-import { useClickAway } from "react-use"
+import { useClickAway, useDebounce } from "react-use"
 
 interface Props {
 	className?: string
 }
 
 export const SearchInput: React.FC<Props> = ({ className }) => {
+	const [searchQuery, setSearchQuery] = useState("")
 	const [focused, setFocused] = useState(false)
+	const [products, setProducts] = useState<Product[]>([])
 	const ref = useRef(null)
 
 	useClickAway(ref, () => {
 		setFocused(false)
 	})
+
+	useDebounce(
+		() => {
+			Api.products.search(searchQuery).then((items) => {
+				setProducts(items)
+			})
+		},
+		250,
+		[searchQuery]
+	)
+
+	const onClickItem = () => {
+		setFocused(false)
+		setSearchQuery("")
+		setProducts([])
+	}
 
 	return (
 		<>
@@ -37,27 +57,35 @@ export const SearchInput: React.FC<Props> = ({ className }) => {
 					type="text"
 					placeholder="Найти продукт..."
 					onFocus={() => setFocused(true)}
+					value={searchQuery}
+					onChange={(e) => setSearchQuery(e.target.value)}
 				/>
 
 				{/* popup */}
-				<div
-					className={cn(
-						"absolute w-full bg-white rounded-xl py-2 top-14 shadow-md transition-all duration-200 invisible opacity-0 z-30",
-						focused && "visible opacity-100 top-12"
-					)}
-				>
-					<Link
-						href="/product/1"
-						className="flex items-center px-3 py-2 hover:bg-primary/10 gap-3"
+				{products.length > 0 && (
+					<div
+						className={cn(
+							"absolute w-full bg-white rounded-xl py-2 top-14 shadow-md transition-all duration-200 invisible opacity-0 z-30",
+							focused && "visible opacity-100 top-12"
+						)}
 					>
-						<img
-							className={"rounded-sm h-8 w-8"}
-							src="https://media.dodostatic.net/image/r:584x584/11ef6138ec6490b6a4585d95adbda82f.avif"
-							alt="Пицца 1"
-						/>
-						<span>Пицца 1</span>
-					</Link>
-				</div>
+						{products.map((product) => (
+							<Link
+								onClick={onClickItem}
+								key={product.id}
+								href={`/product/${product.id}`}
+								className="flex items-center px-3 py-2 hover:bg-primary/10 gap-3"
+							>
+								<img
+									className={"rounded-sm h-8 w-8"}
+									src={product.imageUrl}
+									alt={product.name}
+								/>
+								<span>{product.name}</span>
+							</Link>
+						))}
+					</div>
+				)}
 			</div>
 		</>
 	)
