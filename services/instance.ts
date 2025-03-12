@@ -1,5 +1,3 @@
-//? axios вытаскиваем данные с бд
-
 import axios from "axios"
 
 export const axiosInstance = axios.create({
