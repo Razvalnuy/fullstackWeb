@@ -158,11 +158,15 @@ async function up() {
 			},
 		},
 	})
+
+	// Отключаем Prisma после выполнения сидера, чтобы очистить соединение и избежать проблем с prepared statements
+	await prisma.$disconnect()
 }
 
 async function down() {
-	await prisma.$executeRawUnsafe(`DEALLOCATE ALL;`)
+	await prisma.$executeRawUnsafe(`DEALLOCATE ALL;`) // Очистка всех подготовленных запросов, если они остались
 
+	// Выполняем удаление данных и сбрасываем последовательности для всех таблиц
 	await prisma.$transaction([
 		prisma.$executeRawUnsafe(`DELETE FROM "User";`),
 		prisma.$executeRawUnsafe(`ALTER SEQUENCE "User_id_seq" RESTART WITH 1;`),
@@ -205,15 +209,19 @@ async function down() {
 			`ALTER SEQUENCE "Category_id_seq" RESTART WITH 1;`
 		),
 	])
+
+	// Отключаем Prisma после выполнения удаления
+	await prisma.$disconnect()
 }
 
 async function main() {
 	try {
-		await down()
-		await up()
+		await down() // Вначале выполняем удаление данных
+		await up() // Затем заполняем базу новыми данными
 	} catch (err) {
 		console.error(err)
 	} finally {
+		// В любом случае отключаем Prisma от базы данных
 		await prisma.$disconnect()
 	}
 }
